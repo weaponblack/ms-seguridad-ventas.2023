@@ -1,30 +1,28 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
+  del, get,
+  getModelSchemaRef, param, patch, post, put, requestBody,
+  response
 } from '@loopback/rest';
 import {Usuario} from '../models';
 import {UsuarioRepository} from '../repositories';
+import {SeguridadService} from '../services';
 
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
-    public usuarioRepository : UsuarioRepository,
-  ) {}
+    public usuarioRepository: UsuarioRepository,
+    @service(SeguridadService)
+    public servicioSeguridad: SeguridadService
+  ) { }
 
   @post('/usuario')
   @response(200, {
@@ -44,6 +42,14 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, '_id'>,
   ): Promise<Usuario> {
+    //crear la clave
+    let clave = this.servicioSeguridad.crearClave();
+    //cifrar la clave
+    let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
+    //asignar la clave cifrada al usario
+    usuario.clave = claveCifrada;
+    //enviar correo electronico de notificacion
+
     return this.usuarioRepository.create(usuario);
   }
 
