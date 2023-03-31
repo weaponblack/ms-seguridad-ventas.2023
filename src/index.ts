@@ -36,4 +36,6 @@ if (require.main === module) {
     console.error('Cannot start the application.', err);
     process.exit(1);
   });
+
+  //prueba 1
 }
