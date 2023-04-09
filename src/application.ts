@@ -1,3 +1,4 @@
+require('dotenv').config()
 import {AuthenticationComponent} from '@loopback/authentication/dist/authentication.component';
 import {registerAuthenticationStrategy} from '@loopback/authentication/dist/types';
 import {BootMixin} from '@loopback/boot';
