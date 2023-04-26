@@ -14,10 +14,11 @@ import {
   response
 } from '@loopback/rest';
 import {UserProfile} from '@loopback/security';
+import {ConfiguracionNotificaciones} from '../config/notificaciones.config';
 import {ConfiguracionSeguridad} from '../config/seguridad.config';
 import {Credenciales, FactorDeAutenticacionPorcodigo, Login, PermisosRolMenu, Usuario} from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
-import {AuthService, SeguridadService} from '../services';
+import {AuthService, NotificacionesService, SeguridadService} from '../services';
 
 export class UsuarioController {
   constructor(
@@ -29,6 +30,8 @@ export class UsuarioController {
     public repositorioLogin: LoginRepository,
     @service(AuthService)
     private authService: AuthService,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService
 
   ) { }
 
@@ -50,13 +53,9 @@ export class UsuarioController {
     })
     usuario: Omit<Usuario, '_id'>,
   ): Promise<Usuario> {
-    //crear la clave
     let clave = this.servicioSeguridad.crearTextoAleatorio(10);
-    //cifrar la clave
     let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
-    //asignar la clave cifrada al usario
     usuario.clave = claveCifrada;
-    //enviar correo electronico de notificacion
 
     return this.usuarioRepository.create(usuario);
   }
@@ -199,8 +198,18 @@ export class UsuarioController {
       login.estadoToken = false;
       this.repositorioLogin.create(login);
       usuario.clave = "";
-      //notificar al usuario via correo o msg
+
+      let datos = {
+        correoDestino: usuario.correo,
+        nombreDestino: usuario.primerNombre + " " + usuario.segundoNombre,
+        contenidoCorreo: `Su código de segundo factor de autenticación es: ${codigo2fa}`,
+        asutonCorreo: ConfiguracionNotificaciones.asunto2FA
+      };
+      let url = ConfiguracionNotificaciones.urlNotificaciones2FA;
+      console.log(url)
+      this.servicioNotificaciones.EnviarNotificacion(datos, url)
       return usuario;
+
     }
     return new HttpErrors[401]("Credenciales incorrectas")
   }
